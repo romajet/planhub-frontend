@@ -104,7 +104,7 @@ export const handlers = [
   // 2. Эндпоинт для авторизации (задел на будущее)
   http.post('/api/login', async ({ request }) => {
     // Читаем email/пароль из тела запроса
-    const body = await request.json();
+    await request.json();
 
     // Возвращаем фейкового юзера и токен
     return HttpResponse.json({

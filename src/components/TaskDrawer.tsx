@@ -50,7 +50,7 @@ const mockReports = [
 ];
 
 export const TaskDrawer = () => {
-  const { isTaskDrawerOpen, closeTaskDrawer, selectedTaskId } = useUiStore();
+  const { isTaskDrawerOpen, closeTaskDrawer } = useUiStore();
   const [reportText, setReportText] = useState('');
 
   const handleSendReport = () => {

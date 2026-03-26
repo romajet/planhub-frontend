@@ -24,7 +24,6 @@ import {
 import type { MenuProps } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 
 const { Title } = Typography;
 

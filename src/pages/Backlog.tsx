@@ -1,5 +1,5 @@
-import { Typography, Table, Tag, Button, Card, Space } from 'antd';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Typography, Table, Tag, Button, Card } from 'antd';
+import { useParams } from 'react-router-dom';
 import { EyeOutlined } from '@ant-design/icons';
 import { useUiStore } from '../store/uiStore';
 

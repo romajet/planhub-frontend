@@ -57,7 +57,7 @@ const calendarMessages = {
 export const EmployeeCalendar = () => {
   const { openTaskDrawer } = useUiStore(); // Достаем функцию открытия глобального сайдбара
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedDates, setSelectedDates] = useState<{ start: Date; end: Date } | null>(null);
+  // const [selectedDates, setSelectedDates] = useState<{ start: Date; end: Date } | null>(null);
   const [form] = Form.useForm();
 
   // --- НОВЫЕ СОСТОЯНИЯ ДЛЯ НАВИГАЦИИ ---
@@ -118,7 +118,7 @@ export const EmployeeCalendar = () => {
   // Клик по пустой ячейке (как в Google Calendar)
   const handleSelectSlot = useCallback(
     ({ start, end }: { start: Date; end: Date }) => {
-      setSelectedDates({ start, end });
+      // setSelectedDates({ start, end });
       form.setFieldsValue({
         dateRange: [dayjs(start), dayjs(end)],
         type: 'meeting',

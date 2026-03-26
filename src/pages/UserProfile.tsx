@@ -54,7 +54,7 @@ export const UserProfile = () => {
     { id: '2', period: '01.09.2026 - 05.09.2026', type: 'Конференция', load_percent: 20 },
   ]);
 
-  const handleUpdateProfile = (values: any) => {
+  const handleUpdateProfile = () => {
     message.success('Профиль успешно обновлен!');
   };
 
