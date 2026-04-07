@@ -1,4 +1,4 @@
-import { createBrowserRouter, createHashRouter } from 'react-router-dom';
+import { createHashRouter } from 'react-router-dom';
 import { Login } from '../pages/Login';
 import { MainLayout } from '../layouts/MainLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
