@@ -16,7 +16,6 @@ import {
   Form,
   Select,
   Drawer,
-  Divider,
 } from 'antd';
 import {
   ApartmentOutlined,
@@ -26,6 +25,8 @@ import {
   PlusOutlined,
   MailOutlined,
   PhoneOutlined,
+  EditOutlined,
+  IdcardOutlined,
 } from '@ant-design/icons';
 import type { DataNode } from 'antd/es/tree';
 
@@ -44,7 +45,6 @@ const treeData: DataNode[] = [
         children: [
           { title: 'Отдел Frontend разработки', key: 'frontend', isLeaf: true },
           { title: 'Отдел Backend разработки', key: 'backend', isLeaf: true },
-          { title: 'QA & Тестирование', key: 'qa', isLeaf: true },
         ],
       },
       { title: 'HR & Кадры', key: 'hr', isLeaf: true },
@@ -57,28 +57,27 @@ const mockEmployees = [
     id: '1',
     name: 'Иван Иванов',
     email: 'ivan@planhub.ru',
+    phone: '+7 (999) 111-22-33',
     role: 'Senior Backend',
     dept: 'backend',
+    systemRole: 'EMPLOYEE',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ivan',
     skills: ['Java', 'Spring', 'PostgreSQL'],
+    workload: 80,
+    projects: ['CRM Альфа'],
   },
   {
     id: '2',
-    name: 'Петр Петров',
-    email: 'petr@planhub.ru',
-    role: 'Middle Backend',
-    dept: 'backend',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Petr',
-    skills: ['Python', 'FastAPI'],
-  },
-  {
-    id: '3',
     name: 'Анна Смирнова',
     email: 'anna@planhub.ru',
+    phone: '+7 (900) 555-44-33',
     role: 'Lead Frontend',
     dept: 'frontend',
+    systemRole: 'MANAGER',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Anna',
     skills: ['React', 'TypeScript', 'Zustand'],
+    workload: 40,
+    projects: ['CRM Альфа', 'Сайт Бета'],
   },
 ];
 
@@ -87,7 +86,6 @@ export const CompanyStructure = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [employees, setEmployees] = useState(mockEmployees);
 
-  // Состояния для модалок и дроверов
   const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
   const [isEmpModalOpen, setIsEmpModalOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
@@ -107,25 +105,29 @@ export const CompanyStructure = () => {
     return matchDept && matchSearch;
   });
 
-  // Обработчики создания
   const handleAddDept = (values: any) => {
-    message.success(`Отдел "${values.name}" успешно добавлен!`);
+    message.success(`Отдел "${values.name}" добавлен!`);
     setIsDeptModalOpen(false);
     deptForm.resetFields();
   };
-
   const handleAddEmp = (values: any) => {
-    const newEmp = {
-      id: Date.now().toString(),
-      name: values.name,
-      email: values.email,
-      role: values.role,
-      dept: selectedDeptKey === 'hq' ? 'frontend' : selectedDeptKey, // Упрощение для мока
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${values.name}`,
-      skills: [],
-    };
-    setEmployees([...employees, newEmp]);
-    message.success('Сотрудник добавлен в штат!');
+    setEmployees([
+      ...employees,
+      {
+        id: Date.now().toString(),
+        name: values.name,
+        email: values.email,
+        phone: '+7 (---) ---',
+        role: values.role,
+        dept: selectedDeptKey === 'hq' ? 'frontend' : selectedDeptKey,
+        systemRole: values.systemRole,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${values.name}`,
+        skills: [],
+        workload: 0,
+        projects: [],
+      },
+    ]);
+    message.success('Сотрудник добавлен!');
     setIsEmpModalOpen(false);
     empForm.resetFields();
   };
@@ -173,7 +175,7 @@ export const CompanyStructure = () => {
           <Title level={2} style={{ margin: 0 }}>
             Структура компании
           </Title>
-          <Text type="secondary">Организационное дерево и управление штатным расписанием</Text>
+          <Text type="secondary">Организационное дерево и профили сотрудников</Text>
         </div>
         <Space>
           <Button icon={<ApartmentOutlined />} onClick={() => setIsDeptModalOpen(true)}>
@@ -198,7 +200,6 @@ export const CompanyStructure = () => {
             />
           </Card>
         </Col>
-
         <Col span={16}>
           <Card
             title={
@@ -229,7 +230,6 @@ export const CompanyStructure = () => {
         </Col>
       </Row>
 
-      {/* Модалка: Добавить отдел */}
       <Modal
         title="Новое подразделение"
         open={isDeptModalOpen}
@@ -238,55 +238,110 @@ export const CompanyStructure = () => {
       >
         <Form form={deptForm} layout="vertical" onFinish={handleAddDept}>
           <Form.Item name="name" label="Название отдела" rules={[{ required: true }]}>
-            <Input placeholder="Например: Отдел маркетинга" />
+            <Input placeholder="Отдел маркетинга" />
           </Form.Item>
-          <Form.Item name="parent" label="Родительское подразделение" initialValue="hq">
+          <Form.Item name="parent" label="Родитель" initialValue="hq">
             <Select>
-              <Select.Option value="hq">Головной офис (Москва)</Select.Option>
+              <Select.Option value="hq">Головной офис</Select.Option>
               <Select.Option value="it">IT Департамент</Select.Option>
             </Select>
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* Модалка: Добавить сотрудника */}
       <Modal
         title="Новый сотрудник в штат"
         open={isEmpModalOpen}
         onOk={() => empForm.submit()}
         onCancel={() => setIsEmpModalOpen(false)}
       >
-        <Form form={empForm} layout="vertical" onFinish={handleAddEmp}>
+        <Form
+          form={empForm}
+          layout="vertical"
+          onFinish={handleAddEmp}
+          initialValues={{ systemRole: 'EMPLOYEE' }}
+        >
           <Form.Item name="name" label="ФИО" rules={[{ required: true }]}>
             <Input placeholder="Иванов Иван Иванович" />
           </Form.Item>
           <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
-            <Input placeholder="ivanov@planhub.ru" />
+            <Input placeholder="ivan@planhub.ru" />
           </Form.Item>
           <Form.Item name="role" label="Должность" rules={[{ required: true }]}>
             <Input placeholder="Frontend разработчик" />
           </Form.Item>
+          <Form.Item name="systemRole" label="Системная Роль (USER_ROLE)">
+            <Select>
+              <Select.Option value="EMPLOYEE">Сотрудник</Select.Option>
+              <Select.Option value="MANAGER">Руководитель</Select.Option>
+              <Select.Option value="ADMIN">Администратор</Select.Option>
+            </Select>
+          </Form.Item>
         </Form>
       </Modal>
 
-      {/* Drawer: Профиль сотрудника */}
+      {/* РАСШИРЕННЫЙ ПРОФИЛЬ СОТРУДНИКА */}
       <Drawer
         title="Профиль сотрудника"
         placement="right"
-        width={400}
+        width={450}
         onClose={() => setSelectedProfile(null)}
         open={!!selectedProfile}
+        extra={<Button icon={<EditOutlined />}>Редактировать</Button>}
       >
         {selectedProfile && (
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <div style={{ textAlign: 'center' }}>
-              <Avatar src={selectedProfile.avatar} size={80} style={{ marginBottom: 12 }} />
-              <Title level={4} style={{ margin: 0 }}>
+              <Avatar src={selectedProfile.avatar} size={90} style={{ marginBottom: 12 }} />
+              <Title level={3} style={{ margin: 0 }}>
                 {selectedProfile.name}
               </Title>
-              <Text type="secondary">{selectedProfile.role}</Text>
+              <Text type="secondary" style={{ fontSize: 16 }}>
+                {selectedProfile.role}
+              </Text>
             </div>
-            <Divider />
+
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-around',
+                background: '#f8fafd',
+                padding: 16,
+                borderRadius: 8,
+              }}
+            >
+              <div style={{ textAlign: 'center' }}>
+                <Text type="secondary" style={{ display: 'block' }}>
+                  Загрузка
+                </Text>
+                <Text
+                  strong
+                  style={{
+                    fontSize: 18,
+                    color: selectedProfile.workload > 80 ? '#cf1322' : '#52c41a',
+                  }}
+                >
+                  {selectedProfile.workload}%
+                </Text>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <Text type="secondary" style={{ display: 'block' }}>
+                  Проекты
+                </Text>
+                <Text strong style={{ fontSize: 18 }}>
+                  {selectedProfile.projects.length}
+                </Text>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <Text type="secondary" style={{ display: 'block' }}>
+                  Доступ
+                </Text>
+                <Text strong style={{ fontSize: 18 }}>
+                  <IdcardOutlined /> {selectedProfile.systemRole === 'MANAGER' ? 'Рук.' : 'Сотр.'}
+                </Text>
+              </div>
+            </div>
+
             <div>
               <Text strong style={{ display: 'block', marginBottom: 8 }}>
                 Контакты
@@ -298,13 +353,31 @@ export const CompanyStructure = () => {
                 </Text>
                 <Text>
                   <PhoneOutlined style={{ marginRight: 8 }} />
-                  +7 (999) 000-00-00
+                  {selectedProfile.phone}
+                </Text>
+                <Text>
+                  <ApartmentOutlined style={{ marginRight: 8 }} />
+                  {selectedProfile.dept === 'hq' ? 'Головной офис' : 'IT Департамент'}
                 </Text>
               </Space>
             </div>
+
             <div>
               <Text strong style={{ display: 'block', marginBottom: 8 }}>
-                Компетенции (USER_SKILL)
+                Текущие проекты
+              </Text>
+              <Space size={[0, 8]} wrap>
+                {selectedProfile.projects.length > 0 ? (
+                  selectedProfile.projects.map((p: string) => <Tag key={p}>{p}</Tag>)
+                ) : (
+                  <Text type="secondary">Нет активных проектов</Text>
+                )}
+              </Space>
+            </div>
+
+            <div>
+              <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                Компетенции
               </Text>
               <Space size={[0, 8]} wrap>
                 {selectedProfile.skills && selectedProfile.skills.length > 0 ? (

@@ -1,20 +1,43 @@
-import { Card, Col, Row, Statistic, Typography, Tag, Button } from 'antd';
-import { BugOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Card, Typography, Button, Table, Tag } from 'antd';
+import { ExclamationCircleOutlined, RightOutlined } from '@ant-design/icons';
 import { useAuthStore } from '../store/authStore';
-import { AdminPortfolios } from './AdminPortfolios';
 import { ManagerDashboard } from './ManagerDashboard';
+import { Navigate } from 'react-router-dom';
+import { useUiStore } from '../store/uiStore';
 
 const { Title, Text } = Typography;
 
-// Мок-данные для задач сотрудника
-const mockTasks = [
-  { id: 'T-101', title: 'Обновить дизайн страницы профиля', priority: 'HIGH' },
-  { id: 'T-102', title: 'Написать тесты для компонента Button', priority: 'MEDIUM' },
-  { id: 'T-103', title: 'Исправить баг с модальным окном', priority: 'HIGH' },
+const urgentTasks = [
+  {
+    id: 't_102',
+    title: 'Исправить баг #4412 на проде',
+    project: 'Альфа',
+    deadline: 'Сегодня, 18:00',
+  },
+  { id: 't_105', title: 'Уязвимость в модуле оплат', project: 'Бета', deadline: 'Завтра, 12:00' },
 ];
 
-// --- Компонент для Сотрудника / Менеджера ---
 const StandardDashboard = () => {
+  const { openTaskDrawer } = useUiStore();
+
+  const columns = [
+    { title: 'Срочная задача', dataIndex: 'title', render: (t: string) => <Text strong>{t}</Text> },
+    { title: 'Проект', dataIndex: 'project', render: (p: string) => <Tag color="blue">{p}</Tag> },
+    {
+      title: 'Дедлайн',
+      dataIndex: 'deadline',
+      render: (d: string) => <Text type="danger">{d}</Text>,
+    },
+    {
+      title: '',
+      key: 'action',
+      align: 'right' as const,
+      render: (r: any) => (
+        <Button type="text" icon={<RightOutlined />} onClick={() => openTaskDrawer(r.id)} />
+      ),
+    },
+  ];
+
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
@@ -24,78 +47,31 @@ const StandardDashboard = () => {
         <Text type="secondary">Краткая сводка по вашим активностям на сегодня</Text>
       </div>
 
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col span={8}>
-          <Card variant="borderless">
-            <Statistic title="Активных задач" value={12} />
-          </Card>
-        </Col>
-        <Col span={8}>
-          <Card variant="borderless">
-            <Statistic
-              title="Задач на ревью"
-              value={8}
-              styles={{ content: { color: '#cf1322' } }}
-              prefix={<BugOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col span={8}>
-          <Card variant="borderless">
-            <Statistic
-              title="Закрыто за неделю"
-              value={45}
-              styles={{ content: { color: '#3f8600' } }}
-              prefix={<CheckCircleOutlined />}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      <Row gutter={[16, 16]}>
-        <Col span={16}>
-          <Card title="Мои задачи на сегодня" variant="borderless">
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {mockTasks.map((item, index) => (
-                <div
-                  key={item.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '12px 0',
-                    borderBottom: index === mockTasks.length - 1 ? 'none' : '1px solid #f0f0f0',
-                  }}
-                >
-                  <div>
-                    <Text strong style={{ display: 'block', fontSize: 16 }}>
-                      {item.title}
-                    </Text>
-                    <Tag color={item.priority === 'HIGH' ? 'red' : 'blue'} style={{ marginTop: 8 }}>
-                      {item.priority === 'HIGH' ? 'Высокий приоритет' : 'Обычный'}
-                    </Tag>
-                  </div>
-                  <Button type="link">Взять в работу</Button>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </Col>
-        <Col span={8}>
-          <Card title="Ближайшие дедлайны" variant="borderless">
-            <Text type="secondary">Список горящих дедлайнов</Text>
-          </Card>
-        </Col>
-      </Row>
+      <Card
+        title={
+          <>
+            <ExclamationCircleOutlined style={{ color: '#cf1322' }} /> Требуют немедленного внимания
+          </>
+        }
+        variant="borderless"
+        style={{ border: '1px solid #ffccc7', background: '#fff2f0' }}
+      >
+        <Table
+          dataSource={urgentTasks}
+          columns={columns}
+          rowKey="id"
+          pagination={false}
+          size="small"
+        />
+      </Card>
     </div>
   );
 };
 
-// --- Умный роутер дашборда ---
 export const Dashboard = () => {
   const { user } = useAuthStore();
 
-  if (user?.role === 'ADMIN') return <AdminPortfolios />;
+  if (user?.role === 'ADMIN') return <Navigate to="/portfolio-reports" replace />;
   if (user?.role === 'MANAGER') return <ManagerDashboard />;
 
   return <StandardDashboard />;

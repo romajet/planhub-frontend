@@ -1,5 +1,12 @@
-import { Typography, Card, Row, Col, Table, Tag, Button, Space, message } from 'antd';
-import { FilePdfOutlined, FileExcelOutlined } from '@ant-design/icons';
+import { Typography, Card, Row, Col, Table, Tag, Button, Space, Statistic } from 'antd';
+import {
+  FilePdfOutlined,
+  FileExcelOutlined,
+  TeamOutlined,
+  RiseOutlined,
+  FallOutlined,
+  DollarOutlined,
+} from '@ant-design/icons';
 import {
   BarChart,
   Bar,
@@ -13,86 +20,74 @@ import {
 
 const { Title, Text } = Typography;
 
-// Мок-данные для таблицы и графика
-const portfolioMetrics = [
+const projectMetrics = [
   {
     key: '1',
-    portfolio: 'Цифровая трансформация',
-    budgetTotal: 150, // в миллионах
-    budgetSpent: 67.5,
-    progress: 35,
-    roi: '+12%',
-    risk: 'LOW',
+    project: 'CRM для отдела продаж',
+    income: 150,
+    expense: 90,
+    profit: 60,
+    progress: 75,
+    status: 'В норме',
   },
   {
     key: '2',
-    portfolio: 'Розничные продукты',
-    budgetTotal: 300,
-    budgetSpent: 255,
-    progress: 60,
-    roi: '+5%',
-    risk: 'HIGH',
+    project: 'Мобильное приложение',
+    income: 300,
+    expense: 320,
+    profit: -20,
+    progress: 35,
+    status: 'Отстает',
   },
   {
     key: '3',
-    portfolio: 'IT Инфраструктура',
-    budgetTotal: 80,
-    budgetSpent: 72,
+    project: 'Интеграция ERP',
+    income: 80,
+    expense: 50,
+    profit: 30,
     progress: 95,
-    roi: '+18%',
-    risk: 'LOW',
+    status: 'В норме',
   },
   {
     key: '4',
-    portfolio: 'Маркетинг и PR',
-    budgetTotal: 50,
-    budgetSpent: 20,
+    project: 'Редизайн сайта',
+    income: 50,
+    expense: 20,
+    profit: 30,
     progress: 40,
-    roi: '0%',
-    risk: 'MEDIUM',
+    status: 'В норме',
   },
 ];
 
 export const AdminReports = () => {
-  // Имитация экспорта
-  const handleExport = (format: string) => {
-    message.loading({ content: `Генерация ${format} отчета...`, key: 'export' });
-    setTimeout(() => {
-      message.success({
-        content: `Отчет успешно скачан в формате ${format}!`,
-        key: 'export',
-        duration: 3,
-      });
-    }, 1500);
-  };
-
   const columns = [
     {
-      title: 'Название портфеля',
-      dataIndex: 'portfolio',
-      key: 'portfolio',
+      title: 'Проект',
+      dataIndex: 'project',
+      key: 'project',
       render: (text: string) => <Text strong>{text}</Text>,
     },
     {
-      title: 'Общий бюджет',
-      dataIndex: 'budgetTotal',
-      key: 'budgetTotal',
+      title: 'Доход',
+      dataIndex: 'income',
+      key: 'income',
       render: (val: number) => <Text>{val} млн ₽</Text>,
     },
     {
-      title: 'Освоено средств',
-      dataIndex: 'budgetSpent',
-      key: 'budgetSpent',
-      render: (val: number, record: any) => {
-        const percent = Math.round((val / record.budgetTotal) * 100);
-        // Подсвечиваем красным, если потрачено больше 80% бюджета
-        const color = percent > 80 ? '#cf1322' : 'inherit';
-        return (
-          <Text style={{ color }}>
-            {val} млн ₽ ({percent}%)
-          </Text>
-        );
-      },
+      title: 'Расход',
+      dataIndex: 'expense',
+      key: 'expense',
+      render: (val: number) => <Text type={val > 150 ? 'danger' : 'secondary'}>{val} млн ₽</Text>,
+    },
+    {
+      title: 'Прибыль',
+      dataIndex: 'profit',
+      key: 'profit',
+      render: (val: number) => (
+        <Text type={val < 0 ? 'danger' : 'success'} strong>
+          {val} млн ₽
+        </Text>
+      ),
     },
     {
       title: 'Прогресс',
@@ -101,36 +96,12 @@ export const AdminReports = () => {
       render: (val: number) => <Text>{val}%</Text>,
     },
     {
-      title: 'Прогноз ROI',
-      dataIndex: 'roi',
-      key: 'roi',
-      render: (text: string) => (
-        <Tag color="green" style={{ fontSize: 14, padding: '2px 8px' }}>
-          {text}
-        </Tag>
+      title: 'Статус',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Tag color={status === 'В норме' ? 'green' : 'red'}>{status}</Tag>
       ),
-    },
-    {
-      title: 'Уровень риска',
-      dataIndex: 'risk',
-      key: 'risk',
-      render: (risk: string) => {
-        let color = 'blue';
-        let text = risk;
-        if (risk === 'LOW') {
-          color = 'green';
-          text = 'Низкий';
-        }
-        if (risk === 'MEDIUM') {
-          color = 'orange';
-          text = 'Средний';
-        }
-        if (risk === 'HIGH') {
-          color = 'red';
-          text = 'Высокий';
-        }
-        return <Tag color={color}>{text}</Tag>;
-      },
     },
   ];
 
@@ -146,55 +117,77 @@ export const AdminReports = () => {
       >
         <div>
           <Title level={2} style={{ margin: 0 }}>
-            Отчеты по портфелям
+            Отчеты по проектам
           </Title>
-          <Text type="secondary">Консолидированная финансовая и управленческая аналитика</Text>
+          <Text type="secondary">Консолидированная финансовая аналитика всех проектов</Text>
         </div>
         <Space>
-          <Button icon={<FileExcelOutlined />} onClick={() => handleExport('Excel')}>
-            Экспорт в Excel
-          </Button>
-          <Button type="primary" icon={<FilePdfOutlined />} onClick={() => handleExport('PDF')}>
+          <Button icon={<FileExcelOutlined />}>Экспорт в Excel</Button>
+          <Button type="primary" icon={<FilePdfOutlined />}>
             Сформировать PDF
           </Button>
         </Space>
       </div>
 
       <Row gutter={[24, 24]}>
-        {/* График бюджетов */}
+        {/* ВЕРХНИЕ МЕТРИКИ */}
+        <Col span={6}>
+          <Card variant="borderless">
+            <Statistic title="Количество сотрудников" value={145} prefix={<TeamOutlined />} />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card variant="borderless">
+            <Statistic
+              title="Общий доход"
+              value="580M ₽"
+              prefix={<RiseOutlined />}
+              valueStyle={{ color: '#3f8600' }}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card variant="borderless">
+            <Statistic
+              title="Общий расход"
+              value="480M ₽"
+              prefix={<FallOutlined />}
+              valueStyle={{ color: '#cf1322' }}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card variant="borderless">
+            <Statistic
+              title="Чистая прибыль"
+              value="100M ₽"
+              prefix={<DollarOutlined />}
+              valueStyle={{ color: '#1677ff' }}
+            />
+          </Card>
+        </Col>
+
+        {/* ГИСТОГРАММА */}
         <Col span={24}>
-          <Card title="Сравнение: Общий бюджет vs Освоено (млн ₽)" variant="borderless">
+          <Card title="Гистограмма финансов по проектам (млн ₽)" variant="borderless">
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart
-                data={portfolioMetrics}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
+              <BarChart data={projectMetrics} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="portfolio" axisLine={false} tickLine={false} />
+                <XAxis dataKey="project" axisLine={false} tickLine={false} />
                 <YAxis axisLine={false} tickLine={false} />
                 <RechartsTooltip cursor={{ fill: '#f5f5f5' }} />
                 <Legend />
-                <Bar
-                  dataKey="budgetTotal"
-                  name="Выделенный бюджет"
-                  fill="#1677ff"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="budgetSpent"
-                  name="Освоено средств"
-                  fill="#ff4d4f"
-                  radius={[4, 4, 0, 0]}
-                />
+                <Bar dataKey="income" name="Доход" fill="#52c41a" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="expense" name="Расход" fill="#ff4d4f" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </Card>
         </Col>
 
-        {/* Сводная таблица */}
+        {/* ТАБЛИЦА */}
         <Col span={24}>
-          <Card variant="borderless" styles={{ body: { padding: 0 } }}>
-            <Table dataSource={portfolioMetrics} columns={columns} pagination={false} />
+          <Card title="Сводная таблица" variant="borderless" styles={{ body: { padding: 0 } }}>
+            <Table dataSource={projectMetrics} columns={columns} pagination={false} />
           </Card>
         </Col>
       </Row>

@@ -6,18 +6,14 @@ import App from './App.tsx';
 async function enableMocking() {
   // Запускаем моки ТОЛЬКО в режиме разработки
   if (import.meta.env.MODE !== 'development') {
-    // return;
+    return;
   }
 
   const { worker } = await import('./mocks/browser');
 
-  return worker.start({ 
-    serviceWorker: {
-      // Указываем точный путь к воркеру с учетом имени репозитория
-      url: `${import.meta.env.BASE_URL}mockServiceWorker.js`
-    },
-    onUnhandledRequest: 'bypass' 
-  });
+  // onUnhandledRequest: 'bypass' говорит воркеру не ругаться на запросы
+  // за картинками, шрифтами или бандлами Vite
+  return worker.start({ onUnhandledRequest: 'bypass' });
 }
 
 // Сначала ждем запуска воркера, потом рендерим React

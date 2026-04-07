@@ -11,15 +11,8 @@ import {
   Tag,
   Modal,
   Form,
-  Select,
 } from 'antd';
-import {
-  FolderOutlined,
-  FileTextOutlined,
-  EditOutlined,
-  SaveOutlined,
-  PlusOutlined,
-} from '@ant-design/icons';
+import { FileTextOutlined, EditOutlined, SaveOutlined, PlusOutlined } from '@ant-design/icons';
 import type { DataNode } from 'antd/es/tree';
 
 const { Sider, Content } = Layout;
@@ -27,7 +20,6 @@ const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
 interface KbNode extends DataNode {
-  isFolder?: boolean;
   children?: KbNode[];
 }
 
@@ -35,8 +27,7 @@ const initialTreeData: KbNode[] = [
   {
     title: 'Регламенты компании',
     key: '0-0',
-    icon: <FolderOutlined />,
-    isFolder: true,
+    icon: <FileTextOutlined />,
     children: [
       { title: 'Правила оформления', key: 'doc-1', icon: <FileTextOutlined />, isLeaf: true },
       { title: 'Политика безопасности', key: 'doc-2', icon: <FileTextOutlined />, isLeaf: true },
@@ -45,8 +36,7 @@ const initialTreeData: KbNode[] = [
   {
     title: 'Проект: CRM',
     key: '0-1',
-    icon: <FolderOutlined />,
-    isFolder: true,
+    icon: <FileTextOutlined />,
     children: [
       { title: 'Техническое задание', key: 'doc-3', icon: <FileTextOutlined />, isLeaf: true },
     ],
@@ -55,6 +45,16 @@ const initialTreeData: KbNode[] = [
 
 const mockDocumentsDetail: Record<string, { title: string; content: string; lastUpdated: string }> =
   {
+    '0-0': {
+      title: 'Регламенты компании',
+      content: 'Общий свод правил.',
+      lastUpdated: '01.03.2026',
+    },
+    '0-1': {
+      title: 'Проект: CRM',
+      content: 'Документация по проекту CRM.',
+      lastUpdated: '05.03.2026',
+    },
     'doc-1': {
       title: 'Правила оформления',
       content: 'Текст регламента...',
@@ -78,13 +78,12 @@ export const KnowledgeBase = () => {
   const [editContent, setEditContent] = useState('');
   const [treeData, setTreeData] = useState(initialTreeData);
 
-  // Состояния для создания нового узла
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addParentKey, setAddParentKey] = useState<React.Key | null>(null);
   const [addForm] = Form.useForm();
 
-  const onSelect = (selectedKeys: React.Key[], info: any) => {
-    if (info.node.isLeaf && selectedKeys.length > 0) {
+  const onSelect = (selectedKeys: React.Key[]) => {
+    if (selectedKeys.length > 0) {
       setSelectedDocKey(selectedKeys[0] as string);
       setIsEditing(false);
     }
@@ -106,17 +105,15 @@ export const KnowledgeBase = () => {
     const newNode: KbNode = {
       key: newKey,
       title: values.title,
-      icon: values.type === 'folder' ? <FolderOutlined /> : <FileTextOutlined />,
-      isFolder: values.type === 'folder',
-      isLeaf: values.type !== 'folder',
+      icon: <FileTextOutlined />,
+      isLeaf: true, // По умолчанию новая страница - лист, пока в нее не добавят детей
     };
 
     if (addParentKey) {
-      // Рекурсивное добавление в нужную папку
       const updateTree = (nodes: KbNode[]): KbNode[] => {
         return nodes.map((node) => {
           if (node.key === addParentKey) {
-            return { ...node, children: [...(node.children || []), newNode] };
+            return { ...node, isLeaf: false, children: [...(node.children || []), newNode] };
           }
           if (node.children) {
             return { ...node, children: updateTree(node.children) };
@@ -126,20 +123,16 @@ export const KnowledgeBase = () => {
       };
       setTreeData(updateTree(treeData));
     } else {
-      // Добавление в корень
       setTreeData([...treeData, newNode]);
     }
 
-    // Если создали файл, добавляем для него пустой контент в базу
-    if (values.type === 'file') {
-      mockDocumentsDetail[newKey] = {
-        title: values.title,
-        content: 'Новый документ. Нажмите "Редактировать", чтобы добавить текст.',
-        lastUpdated: new Date().toLocaleDateString('ru-RU'),
-      };
-    }
+    mockDocumentsDetail[newKey] = {
+      title: values.title,
+      content: 'Новый документ. Нажмите "Редактировать", чтобы добавить текст.',
+      lastUpdated: new Date().toLocaleDateString('ru-RU'),
+    };
 
-    message.success('Успешно добавлено!');
+    message.success('Страница успешно создана!');
     setIsAddModalOpen(false);
     addForm.resetFields();
   };
@@ -156,15 +149,14 @@ export const KnowledgeBase = () => {
         }}
       >
         <span>{nodeData.title}</span>
-        {nodeData.isFolder && (
-          <Button
-            type="text"
-            size="small"
-            icon={<PlusOutlined style={{ fontSize: 12, color: '#8c8c8c' }} />}
-            onClick={(e) => handleAddSubPage(e, nodeData.key)}
-            style={{ padding: 0, height: 20, width: 20 }}
-          />
-        )}
+        {/* Плюсик теперь есть у ВСЕХ узлов */}
+        <Button
+          type="text"
+          size="small"
+          icon={<PlusOutlined style={{ fontSize: 12, color: '#8c8c8c' }} />}
+          onClick={(e) => handleAddSubPage(e, nodeData.key)}
+          style={{ padding: 0, height: 20, width: 20 }}
+        />
       </div>
     );
   };
@@ -210,7 +202,7 @@ export const KnowledgeBase = () => {
             alignItems: 'center',
           }}
         >
-          <Text strong>Каталог документов</Text>
+          <Text strong>База знаний</Text>
           <Button type="text" icon={<PlusOutlined />} size="small" onClick={handleAddRoot} />
         </div>
         <Tree
@@ -279,15 +271,14 @@ export const KnowledgeBase = () => {
           >
             <Space direction="vertical" align="center">
               <FileTextOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />
-              <Text type="secondary">Выберите документ в меню слева для просмотра</Text>
+              <Text type="secondary">Выберите страницу в меню слева для просмотра</Text>
             </Space>
           </div>
         )}
       </Content>
 
-      {/* МОДАЛКА ДОБАВЛЕНИЯ ПАПКИ/ФАЙЛА */}
       <Modal
-        title={addParentKey ? 'Создать вложенную страницу' : 'Создать корневой раздел'}
+        title={addParentKey ? 'Создать вложенную страницу' : 'Создать корневую страницу'}
         open={isAddModalOpen}
         onOk={() => addForm.submit()}
         onCancel={() => {
@@ -297,24 +288,13 @@ export const KnowledgeBase = () => {
         okText="Создать"
         cancelText="Отмена"
       >
-        <Form
-          form={addForm}
-          layout="vertical"
-          onFinish={handleSaveNewDoc}
-          initialValues={{ type: 'file' }}
-        >
+        <Form form={addForm} layout="vertical" onFinish={handleSaveNewDoc}>
           <Form.Item
             name="title"
-            label="Название"
+            label="Название страницы"
             rules={[{ required: true, message: 'Введите название' }]}
           >
             <Input placeholder="Например: Инструкция по деплою" />
-          </Form.Item>
-          <Form.Item name="type" label="Тип элемента">
-            <Select>
-              <Select.Option value="file">📄 Текстовый документ</Select.Option>
-              <Select.Option value="folder">📁 Папка (Категория)</Select.Option>
-            </Select>
           </Form.Item>
         </Form>
       </Modal>

@@ -13,19 +13,16 @@ import {
   Badge,
 } from 'antd';
 import { Calendar, dayjsLocalizer, Views, type View } from 'react-big-calendar';
-import { PlusOutlined, CalendarOutlined } from '@ant-design/icons';
+import { PlusOutlined, CalendarOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import 'dayjs/locale/ru'; // Русская локаль для старта недели с понедельника
+import 'dayjs/locale/ru';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useUiStore } from '../store/uiStore';
 
-// Настраиваем локализатор для календаря
 dayjs.locale('ru');
 const localizer = dayjsLocalizer(dayjs);
-
 const { Title, Text } = Typography;
 
-// Типы событий
 type EventType = 'task' | 'meeting' | 'deadline' | 'vacation';
 
 interface AppEvent {
@@ -34,37 +31,17 @@ interface AppEvent {
   start: Date;
   end: Date;
   type: EventType;
-  taskId?: string; // Привязка к реальной задаче в БД
+  taskId?: string;
 }
 
-// Перевод кнопок календаря на русский
-const calendarMessages = {
-  allDay: 'Весь день',
-  previous: 'Назад',
-  next: 'Вперед',
-  today: 'Сегодня',
-  month: 'Месяц',
-  week: 'Неделя',
-  day: 'День',
-  agenda: 'Расписание',
-  date: 'Дата',
-  time: 'Время',
-  event: 'Событие',
-  noEventsInRange: 'Нет событий в этом диапазоне.',
-  showMore: (total: number) => `+ Ещё (${total})`,
-};
-
 export const EmployeeCalendar = () => {
-  const { openTaskDrawer } = useUiStore(); // Достаем функцию открытия глобального сайдбара
+  const { openTaskDrawer } = useUiStore();
   const [isModalVisible, setIsModalVisible] = useState(false);
-  // const [selectedDates, setSelectedDates] = useState<{ start: Date; end: Date } | null>(null);
   const [form] = Form.useForm();
 
-  // --- НОВЫЕ СОСТОЯНИЯ ДЛЯ НАВИГАЦИИ ---
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<View>(Views.WEEK);
 
-  // Мок-данные (Привязываем к текущей дате для наглядности)
   const now = new Date();
   const [events, setEvents] = useState<AppEvent[]>([
     {
@@ -73,78 +50,52 @@ export const EmployeeCalendar = () => {
       start: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 0),
       end: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 14, 0),
       type: 'task',
-      taskId: 't_101', // ID задачи, чтобы открыть её в сайдбаре
-    },
-    {
-      id: '2',
-      title: 'Daily Meeting',
-      start: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 15, 0),
-      end: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 15, 30),
-      type: 'meeting',
-    },
-    {
-      id: '3',
-      title: 'Релиз MVP',
-      start: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 18, 0),
-      end: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 19, 0),
-      type: 'deadline',
+      taskId: 't_101',
     },
   ]);
 
-  // --- КАСТОМИЗАЦИЯ ВНЕШНЕГО ВИДА ---
-
-  // 1. Цвета карточек событий
   const eventPropGetter = (event: AppEvent) => {
-    let backgroundColor = '#1677ff'; // Синий по умолчанию (задачи)
-    if (event.type === 'meeting') backgroundColor = '#08979c'; // Голубой
-    if (event.type === 'deadline') backgroundColor = '#cf1322'; // Красный
-    if (event.type === 'vacation') backgroundColor = '#52c41a'; // Зеленый
-
+    let backgroundColor = '#1677ff';
+    if (event.type === 'meeting') backgroundColor = '#08979c';
+    if (event.type === 'deadline') backgroundColor = '#cf1322';
+    if (event.type === 'vacation') backgroundColor = '#52c41a';
     return { style: { backgroundColor, borderRadius: '4px', border: 'none', opacity: 0.9 } };
   };
 
-  // 2. Выделение выходных дней серым цветом
   const dayPropGetter = (date: Date) => {
     const day = date.getDay();
-    // 0 - Воскресенье, 6 - Суббота
-    if (day === 0 || day === 6) {
-      return { style: { backgroundColor: '#f9f9f9' } };
-    }
+    if (day === 0 || day === 6) return { style: { backgroundColor: '#f9f9f9' } };
     return {};
   };
 
-  // --- ОБРАБОТЧИКИ ДЕЙСТВИЙ ---
-
-  // Клик по пустой ячейке (как в Google Calendar)
   const handleSelectSlot = useCallback(
     ({ start, end }: { start: Date; end: Date }) => {
-      // setSelectedDates({ start, end });
       form.setFieldsValue({
         dateRange: [dayjs(start), dayjs(end)],
         type: 'meeting',
+        recurrence: 'none',
       });
       setIsModalVisible(true);
     },
     [form],
   );
 
-  // Клик по самому событию
   const handleSelectEvent = useCallback(
     (event: AppEvent) => {
-      if (event.type === 'task' && event.taskId) {
-        openTaskDrawer(event.taskId); // Открываем сайдбар задачи!
-      } else {
-        message.info(`Событие: ${event.title}`);
-      }
+      if (event.type === 'task' && event.taskId) openTaskDrawer(event.taskId);
+      else message.info(`Событие: ${event.title}`);
     },
     [openTaskDrawer],
   );
 
-  // Сохранение нового события из модалки
   const handleAddEvent = (values: any) => {
     const newEvent: AppEvent = {
       id: `ev_${Date.now()}`,
-      title: values.title,
+      title:
+        values.title +
+        (values.recurrence !== 'none'
+          ? ` (${values.recurrence === 'daily' ? 'Ежедневно' : 'Еженедельно'})`
+          : ''),
       start: values.dateRange[0].toDate(),
       end: values.dateRange[1].toDate(),
       type: values.type,
@@ -153,6 +104,55 @@ export const EmployeeCalendar = () => {
     setIsModalVisible(false);
     form.resetFields();
     message.success('Событие добавлено!');
+  };
+
+  // --- КАСТОМНЫЙ ТУЛБАР (Стрелочки < | Сегодня | > ) ---
+  const CustomToolbar = (toolbar: any) => {
+    const goToBack = () => toolbar.onNavigate('PREV');
+    const goToNext = () => toolbar.onNavigate('NEXT');
+    const goToCurrent = () => toolbar.onNavigate('TODAY');
+
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 16,
+        }}
+      >
+        <Space size="small">
+          <Button icon={<LeftOutlined />} onClick={goToBack} />
+          <Button onClick={goToCurrent} style={{ fontWeight: 500 }}>
+            Сегодня
+          </Button>
+          <Button icon={<RightOutlined />} onClick={goToNext} />
+        </Space>
+        <Text strong style={{ fontSize: 18, textTransform: 'capitalize' }}>
+          {toolbar.label}
+        </Text>
+        <Space>
+          <Button
+            onClick={() => toolbar.onView('month')}
+            type={toolbar.view === 'month' ? 'primary' : 'default'}
+          >
+            Месяц
+          </Button>
+          <Button
+            onClick={() => toolbar.onView('week')}
+            type={toolbar.view === 'week' ? 'primary' : 'default'}
+          >
+            Неделя
+          </Button>
+          <Button
+            onClick={() => toolbar.onView('day')}
+            type={toolbar.view === 'day' ? 'primary' : 'default'}
+          >
+            День
+          </Button>
+        </Space>
+      </div>
+    );
   };
 
   return (
@@ -176,7 +176,7 @@ export const EmployeeCalendar = () => {
           icon={<PlusOutlined />}
           size="large"
           onClick={() => {
-            form.setFieldsValue({ type: 'task' });
+            form.setFieldsValue({ type: 'task', recurrence: 'none' });
             setIsModalVisible(true);
           }}
         >
@@ -185,7 +185,6 @@ export const EmployeeCalendar = () => {
       </div>
 
       <Card variant="borderless" styles={{ body: { padding: '24px' } }}>
-        {/* Легенда */}
         <Space size="large" style={{ marginBottom: 20 }}>
           <Badge color="#1677ff" text="Задачи" />
           <Badge color="#08979c" text="Встречи" />
@@ -193,22 +192,18 @@ export const EmployeeCalendar = () => {
           <Badge color="#52c41a" text="Отпуска" />
         </Space>
 
-        {/* Сам Календарь */}
         <div style={{ height: '70vh' }}>
           <Calendar
             localizer={localizer}
             events={events}
             startAccessor="start"
             endAccessor="end"
-            messages={calendarMessages}
             views={[Views.MONTH, Views.WEEK, Views.DAY]}
-            // --- ЯВНОЕ УПРАВЛЕНИЕ НАВИГАЦИЕЙ ---
+            components={{ toolbar: CustomToolbar }} // ПОДКЛЮЧИЛИ ТУЛБАР
             date={currentDate}
             onNavigate={(newDate) => setCurrentDate(newDate)}
             view={currentView}
             onView={(newView) => setCurrentView(newView)}
-            // -----------------------------------
-
             selectable={true}
             onSelectSlot={handleSelectSlot}
             onSelectEvent={handleSelectEvent}
@@ -222,7 +217,6 @@ export const EmployeeCalendar = () => {
         </div>
       </Card>
 
-      {/* Модальное окно добавления */}
       <Modal
         title={
           <span>
@@ -240,18 +234,32 @@ export const EmployeeCalendar = () => {
             <Input placeholder="Например: Дейли митинг" />
           </Form.Item>
 
-          <Form.Item name="type" label="Тип события" rules={[{ required: true }]}>
-            <Select>
-              <Select.Option value="task">Задача (Синий)</Select.Option>
-              <Select.Option value="meeting">Встреча (Голубой)</Select.Option>
-              <Select.Option value="deadline">Дедлайн (Красный)</Select.Option>
-              <Select.Option value="vacation">Отсутствие (Зеленый)</Select.Option>
-            </Select>
-          </Form.Item>
+          <Space size="large" style={{ width: '100%', display: 'flex' }}>
+            <Form.Item
+              name="type"
+              label="Тип события"
+              rules={[{ required: true }]}
+              style={{ flex: 1 }}
+            >
+              <Select>
+                <Select.Option value="task">Задача (Синий)</Select.Option>
+                <Select.Option value="meeting">Встреча (Голубой)</Select.Option>
+                <Select.Option value="deadline">Дедлайн (Красный)</Select.Option>
+                <Select.Option value="vacation">Отсутствие (Зеленый)</Select.Option>
+              </Select>
+            </Form.Item>
+
+            {/* НОВОЕ ПОЛЕ: ПОВТОРЕНИЕ */}
+            <Form.Item name="recurrence" label="Повторение" style={{ flex: 1 }}>
+              <Select>
+                <Select.Option value="none">Без повторения</Select.Option>
+                <Select.Option value="daily">Каждый день</Select.Option>
+                <Select.Option value="weekly">Каждую неделю</Select.Option>
+              </Select>
+            </Form.Item>
+          </Space>
 
           <Form.Item name="dateRange" label="Дата и время" rules={[{ required: true }]}>
-            {/* В Ant Design нет удобного встроенного RangePicker для дат+времени без костылей, 
-                 поэтому для простоты оставляем базовый выбор дат, но ИИ поймет, что это диапазон */}
             <DatePicker.RangePicker showTime format="DD.MM.YYYY HH:mm" style={{ width: '100%' }} />
           </Form.Item>
         </Form>

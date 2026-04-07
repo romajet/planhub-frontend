@@ -14,25 +14,23 @@ import {
   Popover,
   List,
   message,
+  Tooltip,
 } from 'antd';
 import {
   BellOutlined,
   UserOutlined,
   LogoutOutlined,
   CheckSquareOutlined,
-  BookOutlined,
-  CalendarOutlined,
   LineChartOutlined,
   NodeIndexOutlined,
   TeamOutlined,
-  FolderOutlined,
   ApartmentOutlined,
   UnorderedListOutlined,
-  BarChartOutlined,
   SettingOutlined,
-  ProfileOutlined,
   HomeOutlined,
   CheckCircleOutlined,
+  CalendarOutlined,
+  BarChartOutlined
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
@@ -49,7 +47,6 @@ export const MainLayout = () => {
   const { user, logout, switchRole, currentProjectId, setCurrentProjectId } = useAuthStore();
   const { token } = theme.useToken();
 
-  // --- СИСТЕМА УВЕДОМЛЕНИЙ ---
   const [notifications, setNotifications] = useState([
     {
       id: '1',
@@ -58,30 +55,23 @@ export const MainLayout = () => {
       time: '10 мин назад',
       unread: true,
     },
-    {
-      id: '2',
-      title: 'Дедлайн близко',
-      desc: 'Задача "Анализ API" истекает завтра',
-      time: '1 час назад',
-      unread: true,
-    },
   ]);
 
   const triggerTestNotification = () => {
-    const newNotif = {
-      id: Date.now().toString(),
-      title: 'Системное уведомление',
-      desc: 'Тестовый пинг системы. Проверка сокетов прошла успешно.',
-      time: 'Только что',
-      unread: true,
-    };
-    setNotifications([newNotif, ...notifications]);
+    setNotifications([
+      {
+        id: Date.now().toString(),
+        title: 'Системное уведомление',
+        desc: 'Тестовый пинг системы.',
+        time: 'Только что',
+        unread: true,
+      },
+      ...notifications,
+    ]);
     message.info('Получено новое уведомление!');
   };
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, unread: false })));
-  };
+  const markAllAsRead = () => setNotifications(notifications.map((n) => ({ ...n, unread: false })));
 
   const notificationContent = (
     <div style={{ width: 320 }}>
@@ -156,54 +146,28 @@ export const MainLayout = () => {
 
   const employeeMenu = [
     { key: '/tasks', icon: <CheckSquareOutlined />, label: 'Задачи' },
-    {
-      key: 'knowledge',
-      icon: <BookOutlined />,
-      label: 'База знаний',
-      children: [
-        { key: '/knowledge/docs', label: '📄 Документация' },
-        { key: '/knowledge/faq', label: '❓ FAQ' },
-        { key: '/knowledge/guides', label: '📋 Гайды' },
-        { key: '/knowledge/templates', label: '🏷️ Шаблоны' },
-      ],
-    },
-    { key: '/calendar', icon: <CalendarOutlined />, label: 'Календарь' },
-    { key: '/reports', icon: <LineChartOutlined />, label: 'Отчеты' },
+    { key: '/reports', icon: <LineChartOutlined />, label: 'Отчет по проекту' },
   ];
 
   const managerMenu = [
-    { key: '/board', icon: <CheckSquareOutlined />, label: 'Дашборд задач' },
     {
-      key: 'backlog-group',
-      icon: <ProfileOutlined />,
-      label: 'Бэклог',
+      key: 'tasks-group',
+      icon: <CheckSquareOutlined />,
+      label: 'Задачи',
       children: [
-        { key: '/backlog/all', label: '📌 Все задачи' },
-        { key: '/backlog/progress', label: '⏳ В работе' },
-        { key: '/backlog/review', label: '🔍 На проверке' },
+        { key: '/board', label: '📊 Дашборд задач' },
+        { key: '/backlog', label: '📌 Бэклог' },
       ],
     },
     { key: '/workflows', icon: <NodeIndexOutlined />, label: 'WorkFlow' },
     { key: '/team', icon: <TeamOutlined />, label: 'Команда' },
-    {
-      key: 'knowledge',
-      icon: <BookOutlined />,
-      label: 'База знаний',
-      children: [
-        { key: '/knowledge/docs', label: '📄 Документация' },
-        { key: '/knowledge/faq', label: '❓ FAQ' },
-      ],
-    },
-    { key: '/calendar', icon: <CalendarOutlined />, label: 'Календарь' },
-    { key: '/reports', icon: <LineChartOutlined />, label: 'Отчеты' },
+    { key: '/reports', icon: <LineChartOutlined />, label: 'Отчет по проекту' },
   ];
 
   const adminMenu = [
-    { key: '/', icon: <FolderOutlined />, label: 'Портфели проектов' },
+    { key: '/portfolio-reports', icon: <BarChartOutlined />, label: 'Отчеты по проектам' },
     { key: '/structure', icon: <ApartmentOutlined />, label: 'Структура компании' },
     { key: '/projects', icon: <UnorderedListOutlined />, label: 'Все проекты' },
-    { key: '/employees', icon: <TeamOutlined />, label: 'Сотрудники' },
-    { key: '/portfolio-reports', icon: <BarChartOutlined />, label: 'Отчеты по портфелям' },
     { key: '/settings', icon: <SettingOutlined />, label: 'Настройки системы' },
   ];
 
@@ -212,13 +176,7 @@ export const MainLayout = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider
-        collapsible
-        collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
-        theme="light"
-        width={240}
-      >
+      <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed} theme="light" width={240}>
         <div
           style={{
             height: 64,
@@ -238,7 +196,6 @@ export const MainLayout = () => {
                   : 'Сотрудник'}
           </Text>
         </div>
-
         <Menu
           theme="light"
           mode="inline"
@@ -278,7 +235,7 @@ export const MainLayout = () => {
                   <Text type="secondary">Проект:</Text>
                   <Select
                     value={currentProjectId}
-                    onChange={(val) => setCurrentProjectId(val)}
+                    onChange={setCurrentProjectId}
                     style={{ width: 280 }}
                     popupMatchSelectWidth={false}
                     options={[
@@ -293,7 +250,7 @@ export const MainLayout = () => {
                             }}
                           >
                             <span>Альфа (CRM)</span>
-                            <Tag color="blue" style={{ margin: 0, marginLeft: 12 }}>
+                            <Tag color="blue" style={{ margin: 0 }}>
                               Руководитель
                             </Tag>
                           </div>
@@ -310,7 +267,7 @@ export const MainLayout = () => {
                             }}
                           >
                             <span>Бета (Сайт)</span>
-                            <Tag color="cyan" style={{ margin: 0, marginLeft: 12 }}>
+                            <Tag color="cyan" style={{ margin: 0 }}>
                               Разработчик
                             </Tag>
                           </div>
@@ -324,7 +281,6 @@ export const MainLayout = () => {
           </div>
 
           <Space size="large">
-            {/* DEV ПАНЕЛЬ */}
             <div
               style={{
                 display: 'flex',
@@ -342,20 +298,28 @@ export const MainLayout = () => {
               <Select
                 value={user?.role}
                 onChange={(value: string) => switchRole(value as Role)}
+                style={{ width: 130 }}
+                size="small"
                 options={[
                   { value: 'ADMIN', label: 'Админ' },
-                  { value: 'MANAGER', label: 'Менеджер' },
+                  { value: 'MANAGER', label: 'Руководитель' },
                   { value: 'EMPLOYEE', label: 'Сотрудник' },
                 ]}
-                style={{ width: 110 }}
-                size="small"
               />
               <Button size="small" type="primary" ghost onClick={triggerTestNotification}>
                 🔔 Тест
               </Button>
             </div>
 
-            {/* КОЛОКОЛЬЧИК */}
+            <Tooltip title="Календарь">
+              <Button
+                type="text"
+                shape="circle"
+                icon={<CalendarOutlined style={{ fontSize: 18 }} />}
+                onClick={() => navigate('/calendar')}
+              />
+            </Tooltip>
+
             <Popover content={notificationContent} trigger="click" placement="bottomRight">
               <Badge count={notifications.filter((n) => n.unread).length} size="small">
                 <Button
@@ -377,7 +341,6 @@ export const MainLayout = () => {
             </Dropdown>
           </Space>
         </Header>
-
         <Content
           style={{
             margin: '24px',
@@ -389,7 +352,6 @@ export const MainLayout = () => {
           <Outlet />
         </Content>
       </Layout>
-
       <TaskDrawer />
     </Layout>
   );
