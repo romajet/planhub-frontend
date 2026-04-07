@@ -11,9 +11,13 @@ async function enableMocking() {
 
   const { worker } = await import('./mocks/browser');
 
-  // onUnhandledRequest: 'bypass' говорит воркеру не ругаться на запросы
-  // за картинками, шрифтами или бандлами Vite
-  return worker.start({ onUnhandledRequest: 'bypass' });
+  return worker.start({ 
+    serviceWorker: {
+      // Указываем точный путь к воркеру с учетом имени репозитория
+      url: `${import.meta.env.BASE_URL}mockServiceWorker.js`
+    },
+    onUnhandledRequest: 'bypass' 
+  });
 }
 
 // Сначала ждем запуска воркера, потом рендерим React
