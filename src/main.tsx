@@ -6,7 +6,7 @@ import App from './App.tsx';
 async function enableMocking() {
   // Запускаем моки ТОЛЬКО в режиме разработки
   if (import.meta.env.MODE !== 'development') {
-    return;
+    // return;
   }
 
   const { worker } = await import('./mocks/browser');
