@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, createHashRouter } from 'react-router-dom';
 import { Login } from '../pages/Login';
 import { MainLayout } from '../layouts/MainLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
@@ -24,7 +24,8 @@ import { Backlog } from '../pages/Backlog';
 import { UserProfile } from '../pages/UserProfile';
 import { ProjectWizard } from '../pages/ProjectWizard';
 
-export const router = createBrowserRouter([
+// export const router = createBrowserRouter([
+export const router = createHashRouter([
   {
     path: '/login',
     element: <Login />,
